@@ -1,4 +1,4 @@
 all: speck
 
-speck: speck.c
-	gcc speck.c -o speck
+speck: speck.cpp
+	g++ speck.cpp -o speck

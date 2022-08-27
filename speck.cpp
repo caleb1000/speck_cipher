@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <inttypes.h>
+#include <vector>
 #define ROR(x, r) ((x >> r) | (x << (64 - r)))
 #define ROL(x, r) ((x << r) | (x >> (64 - r)))
 #define R(x, y, k) (x = ROR(x, 8), x += y, x ^= k, y = ROL(y, 3), y ^= x)
@@ -10,10 +11,16 @@
 //source code based on code shown in wiki
 //https://en.wikipedia.org/wiki/Speck_(cipher)
 
-void encrypt(uint64_t ct[2],
-             uint64_t const pt[2],
+struct encrypted_data
+{
+   uint64_t key[2], data[2];
+};
+
+
+encrypted_data encrypt(uint64_t const pt[2],
              uint64_t const K[2])
 {
+   uint64_t ct[2] = {0,0};
    uint64_t y = pt[0], x = pt[1], b = K[0], a = K[1];
 
    R(x, y, b);//rotate inital values
@@ -22,15 +29,15 @@ void encrypt(uint64_t ct[2],
       R(x, y, b);//rotate new values
    }
 
-   ct[0] = y;
-   ct[1] = x;
-   printf("Encrypted ct[0]=0x%" PRIx64 "\n",ct[0]);
-   printf("Encrypted ct[1]=0x%" PRIx64 "\n",ct[1]);
-   printf("Final Key k[0]=0x%" PRIx64 "\n",b);
-   printf("Final Key k[1]=0x%" PRIx64 "\n\n",a);
+   encrypted_data result;
+   result.key[0] = b;
+   result.key[1] = a;
+   result.data[0] = y;
+   result.data[1] = x;
+   return result;
 }
 
-void decrypt(uint64_t ct[2],
+std::vector<uint64_t> decrypt(uint64_t ct[2],
              uint64_t const pt[2],
              uint64_t const K[2])
 {
@@ -44,11 +51,12 @@ void decrypt(uint64_t ct[2],
 
    ct[0] = y;
    ct[1] = x;
-   printf("Decrypted ct[0]=0x%" PRIx64 "\n",ct[0]);
-   printf("Decrypted ct[1]=0x%" PRIx64 "\n",ct[1]);
-   printf("Original Key k[0]=0x%" PRIx64 "\n",b);
-   printf("Original Key k[1]=0x%" PRIx64 "\n\n",a);
-
+   std::vector<uint64_t> result;
+   result.push_back(ct[0]);
+   result.push_back(ct[1]);
+   //printf("Original Key = 0x%" PRIx64 ,b);
+   //printf("%" PRIx64"\n",a);
+   return result;
 }
 
 
@@ -58,15 +66,17 @@ int main (){
     uint64_t ct[2] = {0,0};
     uint64_t k[2] = {0x1234567812345678,0x1234567812345678};
 
-    encrypt(ct,pt,k);
+    encrypted_data test = encrypt(pt,k);
+    printf("Encrypted data = 0x%" PRIx64,test.data[0]);
+    printf("%" PRIx64 "\n",test.data[1]);
+    printf("Encrypted Key = 0x%" PRIx64,test.key[0]);
+    printf("%" PRIx64 "\n\n",test.key[1]);
 
-    pt[0]=0x729b46cdef16b988;//return value of speck
-    pt[1]=0x35d93a10c51a854c;//return value of speck
-    k[0]=0x35de98aa88def348;//return key of speck
-    k[1]=0x18f8c9e684d9f9b;//return key of speck
-
-    decrypt(ct,pt,k);
-
+    std::vector<uint64_t> decrypted_data = decrypt(ct,test.data,test.key);
+    printf("Decrypted data = 0x");
+    for(int x = 0; x<decrypted_data.size(); x++){
+        printf("%" PRIx64 "",decrypted_data[x]);
+    }
 
 return 0;
 }
