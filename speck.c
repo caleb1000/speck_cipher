@@ -7,6 +7,9 @@
 #define UR(x, y, k) (y ^= x, y = ROR(y, 3), x ^=k, x -= y, x = ROL(x,8))
 #define ROUNDS 32
 
+//source code based on code shown in wiki
+//https://en.wikipedia.org/wiki/Speck_(cipher)
+
 void encrypt(uint64_t ct[2],
              uint64_t const pt[2],
              uint64_t const K[2])
