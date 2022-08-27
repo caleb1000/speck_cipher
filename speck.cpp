@@ -71,7 +71,8 @@ std::vector<uint64_t> format_c_str(char* str){
     std::vector<uint64_t> formated_data;//a vector to hold data from stdin that is put in a format to be encrypted
     uint64_t temp = 0;
     //assume data is big endian
-    printf("Original data = 0x");
+    printf("Original data ascii= %s\n",str);
+    printf("Original data Hex= 0x");
     for(int x = 0; x<raw_data.size(); x++){
         temp += raw_data.at(x) << shift*8;
         if(shift == 0){
@@ -113,7 +114,7 @@ int main (int argc, char* argv[]){
           keys.push_back(k[0]);
           keys.push_back(k[1]);
     }
-    printf("\nEncrypted data = 0x");
+    printf("\nEncrypted data Hex= 0x");
     for(int x = 0; x<encrypt_data.size();x++){
         printf("%" PRIx64 ,encrypt_data.at(x));
     }
@@ -131,11 +132,17 @@ int main (int argc, char* argv[]){
           decrypt_data.push_back(temp.data[0]);
           decrypt_data.push_back(temp.data[1]);
     }
-    printf("Decrypted data = 0x");
+    printf("Decrypted data Hex= 0x");
     for(int x = 0; x<decrypt_data.size();x++){
         printf("%" PRIx64 ,decrypt_data.at(x));
     }
     printf("\n");
-
+    printf("Decrypted data Ascii= 0x");
+    for(int x = 0; x<decrypt_data.size();x++){
+        for(int shift = 56; shift >= 0; shift-=8){
+            printf("%c",(char)(decrypt_data.at(x) >> shift));
+        }
+    }
+    printf("\n");
     return 0;
 }
