@@ -5,8 +5,8 @@ https://en.wikipedia.org/wiki/Speck_(cipher)
 
 Speck is a family of lightweight block ciphers publicly released by the National Security Agency. I based my code off of source code found on wikipedia. From the information given I was able to create a decryption function to read encrypted messages. 
 
-## Resources: ##
-Simple run make and run the following command ```./speck "message"```
+## How to use: ##
+First run make to create an executable named speck. The program takes one input argument which is the message you wish to encrypt and decrypt. For example to run the the executable type the following command ```./speck "message"``` where message is the desired plain text you wish to encrypt.
 
 ## Future Goals: ##
 <br >-Add this cipher algorithm to the jpeg_secret_message repo to allow users to encode secret messages using the speck cipher.<br />
