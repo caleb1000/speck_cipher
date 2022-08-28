@@ -78,7 +78,7 @@ std::vector<uint64_t> format_c_str(char* str){
         if(shift == 0){
             shift = 7;
             formated_data.push_back(temp);
-            printf("%" PRIx64,temp);
+            printf("%016" PRIx64 ,temp);
             temp = 0;
         }
         else{
@@ -88,6 +88,72 @@ std::vector<uint64_t> format_c_str(char* str){
     return formated_data;
 }
 
+//Takes in a message to be encrypted and uses a given key to do it
+//Returns the encrytped message and keys using a vector of structs
+std::vector<crypted_data> encrypt_message(std::vector<uint64_t> message, uint64_t k[2], bool print){
+    uint64_t pt[2];
+    std::vector<crypted_data> encrypt_struct; //vector to hold encrypted data to match with key to decrypt
+    for(int x = 0; x<message.size()-1; x+=2){
+          pt[0] = message.at(x);
+          pt[1] = message.at(x+1);
+          crypted_data temp = encrypt(pt,k);
+          encrypt_struct.push_back(temp);
+          k[0] = temp.key[0];
+          k[1] = temp.key[1];
+    }
+
+    if(print){
+        printf("\nEncrypted data Hex= 0x");
+        for(int x = 0; x<encrypt_struct.size();x++){
+            printf("%016" PRIx64 ,encrypt_struct.at(x).data[0]);
+            printf("%016" PRIx64 ,encrypt_struct.at(x).data[1]);
+        }
+        printf("\n");
+    }
+
+    return encrypt_struct;
+
+}
+
+//Takes in a vector of structs that contain the encrypted_data and keys
+//Returns the decrypted message and keys using a vector of structs
+std::vector<crypted_data> decrypt_message(std::vector<crypted_data> encrypt_struct, bool print){
+    //Decrypt data
+    uint64_t pt[2];
+    uint64_t k[2];
+    std::vector<crypted_data> decrypt_struct; //vector to hold encrypted data to match with key to decrypt
+    for(int x = 0; x<encrypt_struct.size(); x++){
+          k[0] = encrypt_struct.at(x).key[0];
+          k[1] = encrypt_struct.at(x).key[1];
+          pt[0] = encrypt_struct.at(x).data[0];
+          pt[1] = encrypt_struct.at(x).data[1];
+          crypted_data temp = decrypt(pt,k);
+          decrypt_struct.push_back(temp);
+    }
+
+    if(print){
+        std::vector<uint64_t> decrypt_data;
+        printf("Decrypted data Hex= 0x");
+        for(int x = 0; x<decrypt_struct.size();x++){
+            printf("%016" PRIx64 ,decrypt_struct.at(x).data[0]);
+            printf("%016" PRIx64 ,decrypt_struct.at(x).data[1]);
+            decrypt_data.push_back(decrypt_struct.at(x).data[0]);
+            decrypt_data.push_back(decrypt_struct.at(x).data[1]);
+        }
+        printf("\n");
+        printf("Decrypted data Ascii= ");
+        for(int x = 0; x<decrypt_data.size();x++){
+            for(int shift = 56; shift >= 0; shift-=8){
+                printf("%c",(char)(decrypt_data.at(x) >> shift));
+            }
+        }
+        printf("\n");
+    }
+
+    return decrypt_struct;
+
+}
+
 
 int main (int argc, char* argv[]){
 
@@ -95,54 +161,10 @@ int main (int argc, char* argv[]){
         printf("Wrong number of arguments, exiting code\n");
         return -1;
     }
-
     std::vector<uint64_t> formated_data = format_c_str(argv[1]);//format c string into 128bit blocks
-    uint64_t k[2] = {0x1234567812345678,0x1234567812345678};//starting key block
-    uint64_t pt[2];//input data block
-
-    //Encrypt data
-    std::vector<uint64_t> keys; //vector to hold rotating keys for each encrypted block
-    std::vector<uint64_t> encrypt_data; //vector to hold encrypted data to match with key to decrypt
-    for(int x = 0; x<formated_data.size()-1; x+=2){
-          pt[0] = formated_data.at(x);
-          pt[1] = formated_data.at(x+1);
-          crypted_data temp = encrypt(pt,k);
-          encrypt_data.push_back(temp.data[0]);
-          encrypt_data.push_back(temp.data[1]);
-          k[0] = temp.key[0];
-          k[1] = temp.key[1];
-          keys.push_back(k[0]);
-          keys.push_back(k[1]);
-    }
-    printf("\nEncrypted data Hex= 0x");
-    for(int x = 0; x<encrypt_data.size();x++){
-        printf("%" PRIx64 ,encrypt_data.at(x));
-    }
-
-
-    //Decrypt data
-    printf("\n");
-    std::vector<uint64_t> decrypt_data;
-    for(int x = 0; x<encrypt_data.size()-1; x+=2){
-          k[0] = keys.at(x);
-          k[1] = keys.at(x+1);
-          pt[0] = encrypt_data.at(x);
-          pt[1] = encrypt_data.at(x+1);
-          crypted_data temp = decrypt(pt,k);
-          decrypt_data.push_back(temp.data[0]);
-          decrypt_data.push_back(temp.data[1]);
-    }
-    printf("Decrypted data Hex= 0x");
-    for(int x = 0; x<decrypt_data.size();x++){
-        printf("%" PRIx64 ,decrypt_data.at(x));
-    }
-    printf("\n");
-    printf("Decrypted data Ascii= 0x");
-    for(int x = 0; x<decrypt_data.size();x++){
-        for(int shift = 56; shift >= 0; shift-=8){
-            printf("%c",(char)(decrypt_data.at(x) >> shift));
-        }
-    }
-    printf("\n");
+    uint64_t k[2] = {0x1234567812345678,0x1234567812345678};//starting key
+    //Encrypt data and return a vector of structs containing the encrypted data and keys
+    std::vector<crypted_data> encrypt_struct = encrypt_message(formated_data, k, true);
+    std::vector<crypted_data> decrypt_struct = decrypt_message(encrypt_struct, true);
     return 0;
 }
